@@ -1,7 +1,10 @@
 sdk/.env.local
 .distribution-check/
+product/vendor/
+product/.env.local
 **/node_modules/
 **/.dart_tool/
 **/.packages
 **/pubspec.lock
 **/.tgz
+product

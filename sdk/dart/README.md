@@ -6,7 +6,7 @@
 dependencies:
   omnilogs:
     git:
-      url: ssh://git@gitlab.dev.nextate.tech/activity-logs/omni-logs.git
+      url: https://github.com/MathPro29/Omni-Libs.git
       ref: YOUR_COMMIT_OR_TAG
       path: sdk/dart
 ```

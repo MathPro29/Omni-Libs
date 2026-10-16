@@ -2,6 +2,6 @@ module example.com/orders-service
 
 go 1.21
 
-require gitlab.dev.nextate.tech/activity-logs/omni-logs/sdk/go v0.0.0
+require github.com/MathPro29/Omni-Libs/sdk/go v0.0.0
 
-replace gitlab.dev.nextate.tech/activity-logs/omni-logs/sdk/go => ../../go
+replace github.com/MathPro29/Omni-Libs/sdk/go => ../../go

@@ -24,11 +24,11 @@ OmniLogs รับข้อมูลผ่าน HTTPS และ JSON โปร�
 
 | วิธี | ติดตั้งหรือเริ่มใช้งาน | ตัวอย่าง |
 | --- | --- | --- |
-| Go | `go get gitlab.dev.nextate.tech/activity-logs/omni-logs/sdk/go@v0.1.0` | [ตัวอย่าง Go](go/README.md) |
-| Node.js | เผยแพร่ `sdk/js` ไปยัง private npm registry แล้วติดตั้ง `@nextate/omnilogs` | [ตัวอย่าง JS/TS](js/README.md) |
-| Dart ฝั่ง server | เพิ่ม Git dependency โดยระบุ `path: sdk/dart` และ ref ที่ pin ไว้ | [ตัวอย่าง Dart](dart/README.md) |
+| Go | `go get github.com/MathPro29/Omni-Libs/sdk/go@COMMIT_OR_TAG` | [ตัวอย่าง Go](go/README.md) |
+| Node.js | clone repo แล้ว `npm pack` ใน `sdk/js` เพื่อติดตั้ง `.tgz` ในโปรเจกต์ผู้ใช้ | [ตัวอย่าง JS/TS](js/README.md) |
+| Dart ฝั่ง server | เพิ่ม Git dependency จาก repo นี้ โดยระบุ `path: sdk/dart` และ ref ที่ pin ไว้ | [ตัวอย่าง Dart](dart/README.md) |
 
-คำสั่งติดตั้ง Go ต้องมี Git tag `sdk/go/v0.1.0` และสิทธิ์เข้าถึง GitLab ส่วน npm ต้องเผยแพร่ package ก่อน ส่วน Dart ใช้ Git dependency ได้หลัง commit ไฟล์ขึ้น repository
+อัปโหลด commit ที่เปลี่ยน Go module path เป็น GitHub ก่อนติดตั้งจาก GitHub แล้วใช้ commit hash หรือ Git tag `sdk/go/v0.1.0` ที่มีอยู่จริง ส่วน Dart ใช้ Git dependency ได้หลัง commit ไฟล์ขึ้น repository
 
 แต่ละ batch ต้องมี `idempotency_key` ที่ไม่ซ้ำกันทั่วระบบ เช่น `product:service:request-id` หาก retry batch เดิมให้ใช้ key เดิม ขณะนี้ยังไม่ควรเปิด retry อัตโนมัติ เพราะ server ยังไม่รับประกัน idempotency แบบจำกัดขอบเขตตาม Product และป้องกัน race condition ส่วน HTTP header `Idempotency-Key` ยังไม่ถูกนำมาใช้ deduplicate
 
@@ -38,4 +38,4 @@ OmniLogs รับข้อมูลผ่าน HTTPS และ JSON โปร�
 
 ## ลองใช้งานเหมือนเป็นทีมผู้พัฒนา service
 
-มี consumer example ใน `sdk/examples` ที่ติดตั้ง SDK จาก source ในเครื่องและส่ง log ผ่าน client เหมือน service ของทีมจริง ตั้ง `OMNILOGS_BASE_URL`, `OMNILOGS_API_KEY`, `OMNILOGS_ENVIRONMENT_CODE`, `OMNILOGS_QUEUE_KEY` และ `OMNILOGS_SERVICE` ใน environment แล้วรัน `go run .` จาก `examples/go-consumer`, `npm install` และ `node main.mjs` จาก `examples/js-consumer` หรือ `dart pub get` และ `dart run bin/main.dart` จาก `examples/dart-consumer` แต่ละตัวพิมพ์ `batch_id` เมื่อสำเร็จ หลังเผยแพร่แล้ว ทีมเปลี่ยน Go เป็น Git tag, Node.js เป็น npm registry และ Dart เป็น Git dependency ตามคู่มือแต่ละภาษา
+มี consumer example ใน `sdk/examples` ที่ติดตั้ง SDK จาก source ในเครื่องและส่ง log ผ่าน client เหมือน service ของทีมจริง ตั้ง `OMNILOGS_BASE_URL`, `OMNILOGS_API_KEY`, `OMNILOGS_ENVIRONMENT_CODE`, `OMNILOGS_QUEUE_KEY` และ `OMNILOGS_SERVICE` ใน environment แล้วรัน `go run .` จาก `examples/go-consumer`, `npm install` และ `node main.mjs` จาก `examples/js-consumer` หรือ `dart pub get` และ `dart run bin/main.dart` จาก `examples/dart-consumer` แต่ละตัวพิมพ์ `batch_id` เมื่อสำเร็จ สำหรับการจำลองทีมอื่นให้ clone [repository บน GitHub](https://github.com/MathPro29/Omni-Libs) ลงคนละโฟลเดอร์ แล้วติดตั้งตามคู่มือของแต่ละภาษา

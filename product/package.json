@@ -1,0 +1,14 @@
+{
+  "name": "orders-product",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --env-file=.env.local src/main.mjs"
+  },
+  "dependencies": {
+    "@nextate/omnilogs": "file:vendor/Omni-Libs/sdk/js"
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}

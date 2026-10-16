@@ -1,17 +1,17 @@
 # Client สำหรับ Node.js และ TypeScript
 
-เผยแพร่โฟลเดอร์นี้ไปยัง private npm registry ก่อน แล้วติดตั้ง `@nextate/omnilogs` package ใช้ `fetch` ที่มีมาให้ใน Node.js 18 ขึ้นไป
+package ใช้ `fetch` ที่มีมาให้ใน Node.js 18 ขึ้นไป สำหรับการทดลองจาก GitHub ให้ clone repository และสร้าง package archive จาก `sdk/js`:
 
-ผู้ดูแลที่มีสิทธิ์ publish สามารถเผยแพร่จากโฟลเดอร์ `sdk/js` ไปยัง GitLab package registry ได้ (แทน `PROJECT_ID` ด้วย project ID และตั้ง npm token ใน npm config หรือ CI):
-
-```sh
-npm publish --registry=https://gitlab.dev.nextate.tech/api/v4/projects/PROJECT_ID/packages/npm/
+```powershell
+git clone https://github.com/MathPro29/Omni-Libs.git
+cd Omni-Libs\sdk\js
+npm pack
 ```
 
-ทีมที่ติดตั้งให้ตั้งค่า npm scope ให้ชี้ registry เดียวกันใน `.npmrc` และอ่าน token จาก secret store จากนั้นติดตั้ง:
+ในโปรเจกต์ผู้ใช้แยก ติดตั้งไฟล์ `nextate-omnilogs-0.1.0.tgz` ที่สร้างขึ้น (ระบุ path ไปยังไฟล์จริง):
 
-```sh
-npm install @nextate/omnilogs
+```powershell
+npm install C:\path\to\nextate-omnilogs-0.1.0.tgz
 ```
 
 ตัวอย่างเรียกใช้:
