@@ -39,8 +39,11 @@ func TestMiddlewareSendsRouteMetadataWithoutRequestSecrets(t *testing.T) {
 	t.Setenv("OMNILOGS_SERVICE", "assetwise-core-api")
 
 	e := echo.New()
-	e.POST("/orders/:id", func(c echo.Context) error { return c.NoContent(http.StatusNoContent) }, Middleware())
-	request := httptest.NewRequest(http.MethodPost, "/orders/123", strings.NewReader(`{"password":"do-not-log"}`))
+	e.POST("/orders/:id", func(c echo.Context) error {
+		c.Set("logger", map[string]any{"adminsId": 345, "projectsId": 14})
+		return c.NoContent(http.StatusNoContent)
+	}, Middleware())
+	request := httptest.NewRequest(http.MethodPost, "/orders/123?source=mobile", strings.NewReader(`{"name":"facility","password":"do-not-log"}`))
 	request.Header.Set("Authorization", "Bearer do-not-log")
 	response := httptest.NewRecorder()
 	e.ServeHTTP(response, request)
@@ -60,6 +63,17 @@ func TestMiddlewareSendsRouteMetadataWithoutRequestSecrets(t *testing.T) {
 		data, ok := logs[0].(map[string]any)["data"].(map[string]any)
 		if !ok || data["route"] != "/orders/:id" || data["status_code"] != float64(http.StatusNoContent) {
 			t.Fatalf("invalid route metadata: %v", data)
+		}
+		requestData, ok := data["request"].(map[string]any)
+		if !ok || requestData["method"] != http.MethodPost || requestData["path"] != "/orders/123" {
+			t.Fatalf("missing request details: %v", data["request"])
+		}
+		body, ok := requestData["body"].(map[string]any)
+		if !ok || body["name"] != "facility" || body["password"] != "[REDACTED]" {
+			t.Fatalf("missing or unsafe request body: %v", requestData["body"])
+		}
+		if data["user_id"] != float64(345) || data["project_id"] != float64(14) {
+			t.Fatalf("missing actor/project metadata: %v", data)
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("timed out waiting for OmniLogs event")
