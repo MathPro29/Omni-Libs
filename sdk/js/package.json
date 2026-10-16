@@ -1,0 +1,15 @@
+{
+  "name": "@nextate/omnilogs",
+  "version": "0.1.0",
+  "description": "Server-side OmniLogs ingestion client",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "files": ["index.js", "index.d.ts", "README.md"],
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,7 @@
+sdk/.env.local
+.distribution-check/
+**/node_modules/
+**/.dart_tool/
+**/.packages
+**/pubspec.lock
+**/.tgz

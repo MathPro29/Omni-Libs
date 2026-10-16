@@ -1,0 +1,8 @@
+{
+  "name": "orders-service-example",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@nextate/omnilogs": "file:../../js"
+  }
+}

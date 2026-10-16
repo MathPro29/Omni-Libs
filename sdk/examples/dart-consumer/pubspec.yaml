@@ -1,0 +1,7 @@
+name: orders_service_example
+publish_to: none
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+dependencies:
+  omnilogs:
+    path: ../../dart
