@@ -3,6 +3,8 @@ package omni
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,8 +23,34 @@ type Config struct {
 	APIKey string
 	// EnvironmentCode is the active Environment code assigned to the API key.
 	EnvironmentCode string
+	// QueueKey is the logical queue used by FnAdd.
+	QueueKey string
 	// HTTPClient optionally replaces the default client, which has a five-second timeout.
 	HTTPClient *http.Client
+}
+
+// FnAdd sends one event with a fresh idempotency key. Use Client.Send when retrying a logical batch.
+func FnAdd(ctx context.Context, config Config, data map[string]any) (BatchResult, error) {
+	client, err := New(config)
+	if err != nil {
+		return BatchResult{}, err
+	}
+	var id [16]byte
+	if _, err := rand.Read(id[:]); err != nil {
+		return BatchResult{}, fmt.Errorf("omnilogs: create idempotency key: %w", err)
+	}
+	return client.Send(ctx, Batch{
+		QueueKey:       config.QueueKey,
+		SourceType:     "SERVICE",
+		SourcePlatform: "HTTP",
+		IdempotencyKey: config.QueueKey + ":" + hex.EncodeToString(id[:]),
+		Logs: []Log{{
+			SequenceNo:     1,
+			SourceType:     "SERVICE",
+			SourcePlatform: "HTTP",
+			Data:           data,
+		}},
+	})
 }
 
 // Client sends batches to the OmniLogs ingestion API.
