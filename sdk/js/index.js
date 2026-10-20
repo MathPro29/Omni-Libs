@@ -54,9 +54,14 @@ export class OmniLogsClient {
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(this.timeoutMs),
     });
-    const payload = await response.json();
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new OmniLogsError(response.status, 'INVALID_RESPONSE', 'response is not valid JSON');
+    }
     if (!response.ok) throw new OmniLogsError(response.status, payload?.error?.code ?? 'UNKNOWN', payload?.error?.message ?? 'request failed');
-    if (!payload?.data?.batch_id) throw new Error('OmniLogs returned an invalid batch response');
+    if (typeof payload?.data?.batch_id !== 'string' || !payload.data.batch_id) throw new Error('OmniLogs returned an invalid batch response');
     return payload.data;
   }
 }

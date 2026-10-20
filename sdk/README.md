@@ -30,9 +30,9 @@ OmniLogs รับข้อมูลผ่าน HTTPS และ JSON โปร�
 
 อัปโหลด commit ที่เปลี่ยน Go module path เป็น GitHub ก่อนติดตั้งจาก GitHub แล้วใช้ commit hash หรือ Git tag `sdk/go/v0.1.0` ที่มีอยู่จริง ส่วน Dart ใช้ Git dependency ได้หลัง commit ไฟล์ขึ้น repository
 
-แต่ละ batch ต้องมี `idempotency_key` ที่ไม่ซ้ำกันทั่วระบบ เช่น `product:service:request-id` หาก retry batch เดิมให้ใช้ key เดิม ขณะนี้ยังไม่ควรเปิด retry อัตโนมัติ เพราะ server ยังไม่รับประกัน idempotency แบบจำกัดขอบเขตตาม Product และป้องกัน race condition ส่วน HTTP header `Idempotency-Key` ยังไม่ถูกนำมาใช้ deduplicate
+แต่ละ batch ต้องมี `idempotency_key` ที่ไม่ซ้ำกันทั่วระบบ เช่น `product:service:request-id` หาก retry batch เดิมให้ใช้ key เดิม บริการ OmniLogs ต้อง deduplicate แบบ atomic ตาม Product และ Environment ตาม[โปรโตคอลกลาง](PROTOCOL.md) ก่อนเปิด retry อัตโนมัติ ส่วน HTTP header `Idempotency-Key` ไม่ใช้สำหรับ deduplication
 
-ปกปิดข้อมูลลับและข้อมูลส่วนบุคคลก่อนส่ง SDK ไม่ได้จับ request body หรือติดตั้ง framework middleware ให้อัตโนมัติ ควรส่ง log ผ่าน background worker หรือ bounded queue เพื่อไม่ให้ request หลักของ service รอ OmniLogs
+Go Echo `Middleware()` เก็บเฉพาะ route metadata; หากเลือกใช้ `MiddlewareWithPayload()` จะส่ง JSON request/response body แบบจำกัดขนาดและ query ไปยัง OmniLogs จึงต้องใช้ HTTPS และตรวจว่าบริการ OmniLogs ป้องกัน payload ดิบใน queue/failure/archive, mask ข้อมูลก่อนแสดง และตรวจสิทธิ์พร้อม audit เมื่อเปิดดู raw ตาม[เกณฑ์ก่อนปล่อย](RELEASE_CUTOFF.md) ตั้ง field ลับให้ครบก่อนใช้กับข้อมูลจริง JavaScript กับ Dart เป็น sender client ที่ผู้ใช้ต้องสร้าง event เอง สำหรับ audit event ที่ห้ามหาย ให้ใช้การส่งแบบรอผลตอบรับ `Client.Send` ตามความเหมาะสม
 
 ทุกภาษาส่งตาม contract เดียวกันได้ ไม่ต้องเชื่อมต่อฐานข้อมูลหรือ NATS ของ OmniLogs
 

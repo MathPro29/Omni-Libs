@@ -90,15 +90,28 @@ class OmniLogsClient {
     }
     final response = await request.close().timeout(timeout);
     final text = await utf8.decoder.bind(response).join().timeout(timeout);
-    final envelope = jsonDecode(text) as Map<String, dynamic>;
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final error = envelope['error'] as Map<String, dynamic>?;
+    Map<String, dynamic> envelope;
+    try {
+      envelope = jsonDecode(text) as Map<String, dynamic>;
+    } on FormatException {
       throw OmniLogsException(response.statusCode,
-          error?['code']?.toString() ?? 'UNKNOWN',
-          error?['message']?.toString() ?? 'request failed');
+          'INVALID_RESPONSE', 'response is not valid JSON');
+    } on TypeError {
+      throw OmniLogsException(response.statusCode,
+          'INVALID_RESPONSE', 'response is not a JSON object');
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final error = envelope['error'];
+      final code = error is Map ? error['code']?.toString() ?? 'UNKNOWN' : 'UNKNOWN';
+      final message = error is Map
+          ? error['message']?.toString() ?? 'request failed'
+          : 'request failed';
+      throw OmniLogsException(response.statusCode, code, message);
     }
     final data = envelope['data'];
-    if (data is! Map<String, dynamic> || data['batch_id'] is! String) {
+    if (data is! Map<String, dynamic> ||
+        data['batch_id'] is! String ||
+        (data['batch_id'] as String).isEmpty) {
       throw const FormatException('OmniLogs returned an invalid batch response');
     }
     return data;

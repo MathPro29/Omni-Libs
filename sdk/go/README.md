@@ -10,7 +10,19 @@ import omni "github.com/MathPro29/Omni-Libs/sdk/go/echo"
 api.GET("/getOne", banks.FnGetOne, omni.Middleware())
 ```
 
-Middleware ส่งเฉพาะ method, route template, status, duration และชื่อ service โดยไม่ส่ง request/response body หรือ headers การส่งทำใน worker ที่มีคิวจำกัดเพื่อไม่ให้ route รอ OmniLogs; หากคิวเต็มจะข้าม event และบันทึกข้อผิดพลาดใน application log
+`Middleware()` เก็บ method, route template, status, duration และผู้ใช้/โปรเจกต์จาก Echo context โดยไม่ส่ง path จริง, query, headers หรือ body หากต้องเก็บ JSON request/response body และ query ให้ใช้ `omni.MiddlewareWithPayload()` แทน ซึ่งจำกัด body สูงสุดด้านละ 64 KiB และไม่ส่ง Authorization/Cookie headers การเปิดใช้แบบนี้ต้องใช้ HTTPS และยืนยันว่าบริการ OmniLogs ป้องกัน payload ดิบและ mask เอกสารที่ใช้ค้นหาตาม[เกณฑ์ก่อนปล่อย](../RELEASE_CUTOFF.md) ตั้ง field ที่เป็นข้อมูลลับให้ครบก่อนเปิดใช้กับ route จริง
+
+Middleware ส่งแบบ asynchronous ด้วย worker เดียวและคิวในหน่วยความจำ 1,024 รายการ หากคิวเต็มหรือส่งไม่สำเร็จ event อาจหายได้ ใช้ `omni.Stats()` ดูจำนวนค้างคิว ทิ้ง และส่งไม่สำเร็จ หลังหยุดรับ HTTP request ให้เรียก `omni.Shutdown(ctx)` เพื่อรอระบายคิวก่อนปิด process:
+
+```go
+ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+defer cancel()
+if err := omni.Shutdown(ctx); err != nil { log.Printf("omnilogs drain: %v", err) }
+pending, dropped, failed := omni.Stats()
+log.Printf("omnilogs delivery: pending=%d dropped=%d failed=%d", pending, dropped, failed)
+```
+
+หากต้องการ log ที่ต้องยืนยันการรับจริง ให้ใช้ `Client.Send` และตรวจผลตอบรับตาม business transaction นั้น คิวของ middleware เป็น best effort
 
 ## ส่ง event เอง
 

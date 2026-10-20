@@ -10,7 +10,7 @@
 
 ## คำขอพื้นฐาน
 
-ส่ง `POST {origin}/api/v1/ingest/logs` พร้อม header และ JSON body ตามตัวอย่าง ค่า `idempotency_key` ต้องอยู่ใน JSON body สร้างให้ไม่ซ้ำกันทั่วระบบต่อ batch และใส่ชื่อ product/service นำหน้า หาก retry batch เดิมให้ใช้ค่าเดิม ปัจจุบัน server ยังไม่ใช้ HTTP header `Idempotency-Key` เพื่อป้องกัน batch ซ้ำ
+ส่ง `POST {origin}/api/v1/ingest/logs` พร้อม header และ JSON body ตามตัวอย่าง ค่า `idempotency_key` ต้องอยู่ใน JSON body สร้างให้ไม่ซ้ำกันทั่วระบบต่อ batch และใส่ชื่อ product/service นำหน้า หาก retry batch เดิมให้ใช้ค่าเดิม การรับข้อมูลต้อง deduplicate แบบ atomic ตาม Product, Environment และ `idempotency_key` โดยคืน `batch_id` เดิมสำหรับ batch เดิม; หากใช้ key เดิมกับเนื้อหาต่างกันต้องตอบข้อผิดพลาดที่ชัดเจน HTTP header `Idempotency-Key` ไม่ใช่แหล่งข้อมูลสำหรับการ deduplicate
 
 ```http
 POST /api/v1/ingest/logs HTTP/1.1
@@ -65,7 +65,7 @@ HTTP `201` พร้อม `data.batch_id` หมายถึง batch ถูก
 {"success":true,"data":{"batch_id":"<uuid>","status":"QUEUED"}}
 ```
 
-การ index เกิดภายหลัง หากต้องตรวจสอบระหว่างวิเคราะห์ปัญหา ให้เรียก `GET /api/v1/ingest/batches/{batch_id}` ด้วย API key เดิม ไม่ควร poll หลังการส่งทุกครั้ง เมื่อได้ non-2xx ให้อ่าน `error.code` และ `error.message` ซึ่งเป็นข้อความสำหรับ client ส่วน `400`, `401`, `403` และ `413` ต้องแก้ config หรือ payload ก่อน ส่วน `429`, `5xx` และ network timeout อาจเป็นปัญหาชั่วคราว แต่ยังไม่ควร retry อัตโนมัติจนกว่า server จะบังคับ idempotency ที่ป้องกัน race condition และแยกขอบเขตตาม Product
+การ index เกิดภายหลัง หากต้องตรวจสอบระหว่างวิเคราะห์ปัญหา ให้เรียก `GET /api/v1/ingest/batches/{batch_id}` ด้วย API key เดิม ไม่ควร poll หลังการส่งทุกครั้ง เมื่อได้ non-2xx ให้อ่าน `error.code` และ `error.message` ซึ่งเป็นข้อความสำหรับ client ส่วน `400`, `401`, `403` และ `413` ต้องแก้ config หรือ payload ก่อน ส่วน `429`, `5xx` และ network timeout อาจเป็นปัญหาชั่วคราว ผู้เรียกอาจ retry batch เดิมด้วย `idempotency_key` เดิมเมื่อบริการ OmniLogs ผ่านข้อกำหนด deduplication ข้างต้น
 
 ## วิธีทดสอบการเชื่อมต่อ
 
@@ -125,6 +125,6 @@ curl --fail-with-body "$OMNILOGS_BASE_URL/api/v1/ingest/batches/$BATCH_ID" \
 3. สร้าง `idempotency_key` ใน body ให้ไม่ซ้ำกันทั่วระบบและคงเดิมเมื่อ retry batch เดิม
 4. ถือว่า `201` คือเข้าคิวแล้ว และอ่าน `data.batch_id`
 5. ตั้ง timeout และจัดการ network/HTTP errors โดยไม่พิมพ์ key หรือ payload ลับลง log
-6. ปกปิดข้อมูลอ่อนไหวก่อน serialize และส่งผ่าน background worker หรือ bounded queue เมื่อ capture จาก request หลัก
+6. ปกปิดข้อมูลอ่อนไหวก่อน serialize หากต้องส่ง payload ดิบเพื่อให้ OmniLogs ปกปิดภายหลัง ต้องใช้ HTTPS และให้บริการรับ log ป้องกันข้อมูลดิบตั้งแต่ queue จนถึง archive รวมทั้งจำกัดสิทธิ์เปิดดู raw และบันทึก audit; ส่งผ่าน background worker หรือ bounded queue เมื่อ capture จาก request หลัก
 
 ทุกภาษาสามารถสร้าง event ด้วย framework middleware ของตัวเองได้ ส่วน API, queue, policy การปกปิดข้อมูล และ worker ยังคงอยู่ในการดูแลของ OmniLogs
